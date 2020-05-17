@@ -17,29 +17,46 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$query = $conn->query("SELECT * FROM malaysia_data");
+$query = $conn->query("SELECT DISTINCT origin,destination FROM `malaysia_data`");
 $num = $query->num_rows;
 if ($num == 0) {
     $data = array();
 } else {
     $data = $query->fetch_all(MYSQLI_ASSOC);
 }
+try {
+    foreach ($data as $eachData) {
+        $origin = $eachData["origin"];
+        $destination = $eachData["destination"];
+        $airline = 'malaysiaairlines';
+        $programme_slug = 'malaysiaairlines';
 
-foreach ($data as $eachData) {
-    $origin = $eachData["origin"];
-    $destination = $eachData["destination"];
-    $airline = 'malaysiaairlines';
-    $programme_slug = 'malaysiaairlines';
-    $data = serialize(array('trip_type' => $eachData['planType'], 'class' => $eachData['cabinClass'], 'points' => $eachData['miles'], 'level' => 'NA'));
+        $query = $conn->query("SELECT * FROM malaysia_data WHERE origin='$origin' AND destination='$destination'");
+        $num = $query->num_rows;
+        if ($num == 0) {
+            $newData = array();
+        } else {
+            $newData = $query->fetch_all(MYSQLI_ASSOC);
+        }
 
-    $query = "SELECT * FROM routes WHERE origin='$origin' AND destination='$destination' AND airline_slug='$airline'";
-    $query = $conn->query($query);
-    $num = $query->num_rows;
-    if ($num == 0) {
-        $conn->query("INSERT INTO routes (origin,destination,programme_slug,airline_slug,data,created_at) VALUES ('$origin','$destination','$programme_slug','$airline','$data',NOW())");
-    } else {
-        $conn->query("UPDATE routes SET data='$data',updated_at=NOW() WHERE origin='$origin' AND destination='$destination' AND programme_slug='$programme_slug' AND airline_slug='$airline'");
+        $dummy = array();
+        foreach ($newData as $eachNewData) {
+            $dummy[] = array('trip_type' => $eachNewData['planType'], 'class' => $eachNewData['cabinClass'], 'points' => (int)$eachNewData['miles'], 'level' => 'N');
+        }
+        $data = serialize($dummy);
+
+        $queryNew = "SELECT * FROM new_routes WHERE origin='$origin' AND destination='$destination'";
+        $query = $conn->query($queryNew);
+        $num = $query->num_rows;
+        if ($num == 0) {
+            $newQuery = "INSERT INTO new_routes (origin,destination,programme_slug,airline_slug,data,created_at) VALUES ('$origin','$destination','$programme_slug','$airline','$data',NOW())";
+            $result = $conn->query($newQuery);
+        } else {
+            $result = $conn->query("UPDATE new_routes SET data='$data',updated_at=NOW() WHERE origin='$origin' AND destination='$destination'");
+        }
     }
+}catch (Exception $e){
+    echo $e;
 }
 
 ?>

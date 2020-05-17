@@ -20,4 +20,7 @@ if($num == 0) {
     $sql = "INSERT INTO malaysia_data (origin, destination, planType, miles, cabinClass, created_on) VALUES ('$origin', '$destination', '$planType', $miles,'$cabinClass'," . time() . ")";
     $conn->query($sql);
 }
+
 header('location:malaysia-view.php');exit();
+
+
