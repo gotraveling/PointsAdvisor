@@ -55,6 +55,9 @@ try {
             $result = $conn->query("UPDATE new_routes SET data='$data',updated_at=NOW() WHERE origin='$origin' AND destination='$destination'");
         }
     }
+
+    $result = $conn->query("DELETE FROM `routes` WHERE programme_slug='malaysiaairlines'");
+    $result = $conn->query("INSERT INTO `routes` (origin,destination,programme_slug,airline_slug,data,created_at) SELECT origin,destination,programme_slug,airline_slug,data,created_at FROM new_routes");
 }catch (Exception $e){
     echo $e;
 }
